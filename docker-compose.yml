@@ -1,0 +1,45 @@
+version: '3'
+
+volumes:
+  postgres-data:
+    driver: local
+
+networks:
+  keycloak-net:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres
+    container_name: docker-keycloak-db
+    networks:
+      - keycloak-net
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:15.0.2
+    container_name: docker-keycloak
+    networks:
+      - keycloak-net
+    environment:
+      DB_VENDOR: POSTGRES
+      DB_ADDR: postgres
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_SCHEMA: public
+      DB_PASSWORD: password
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: 123
+      KEYCLOAK_STATISTICS: all
+    entrypoint: /opt/jboss/tools/extended-docker-entrypoint.sh
+    volumes:
+      - ./docker-entrypoint.sh:/opt/jboss/tools/extended-docker-entrypoint.sh
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
